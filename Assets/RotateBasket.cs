@@ -1,50 +1,147 @@
 using System.Net;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
+using UnityEngine.SceneManagement;
+using TMPro;
 
 public class RotateBasket : MonoBehaviour
 {
-    public GameObject basket;
+    #region 변수들
+    private GameObject basket;
+    private GameObject ttb;
+    private GameObject Oezjo;
+    private GameObject lpiece;
+    private GameObject rpiece;
+    private GameObject ltarget;
+    private GameObject rtarget;
+    private GameObject talk;
     private RectTransform basketRectTransform;
-    private Vector3 initCcale;
     private RectTransform cookieTransform;
-    public GameObject ttb;
-    public GameObject Oezjo;
-    public GameObject lpiece;
-    public GameObject rpiece;
-    public GameObject ltarget;
-    public GameObject rtarget;
-    public GameObject talk;
+    private Vector2 initCcale;
+    private RotateBasket smac;
+    private GameObject Ocore;
+    private GameObject retry;
+    private Button selfB;
+    private Button coreB;
+    private Button baseB;
+    
+    TMP_InputField inputField;
     Vector2 lv;
     Vector2 rv;
+    float newHeight;
+    #endregion
 
-    private void Start(){
+    private void Awake(){
+        basket = GameObject.FindWithTag("Player");
+        inputField = FindObjectOfType<TMP_InputField>();
+        smac = FindObjectOfType<RotateBasket>();
+        Ocore = smac.gameObject;
+        talk = inputField.gameObject;
+        ttb = GameObject.FindWithTag("Respawn");
+    }
+
+    private void Start()
+        {
+            retry = GameObject.FindWithTag("Finish");
+            Oezjo = talk.transform.parent.gameObject;
+            Oezjo.SetActive(false);
+            Transform ot = Oezjo.GetComponent<Transform>();
+
+            lpiece = ot.GetChild(1).gameObject;
+            rpiece = ot.GetChild(2).gameObject;
+            ltarget = ot.GetChild(3).gameObject;
+            rtarget = ot.GetChild(4).gameObject;
+
+        baseB = basket.GetComponent<Button>();
         ttb.SetActive(false);
+        initCcale = new Vector2(15.26292f, 15.4337f);
         cookieTransform = Oezjo.GetComponent<RectTransform>();
-        initCcale = cookieTransform.localScale;
-        Oezjo.SetActive(false);
-        cookieTransform.localScale = new Vector3(initCcale.x - 2, initCcale.y - 2, initCcale.z);
-        gameObject.GetComponent<Button>().interactable = false;
+        cookieTransform.localScale = new Vector2(initCcale.x - 2, initCcale.y - 2);
+        selfB = gameObject.GetComponent<Button>();
+        selfB.interactable = false;
+        coreB = smac.GetComponent<Button>();
+        coreB.interactable = false;
         talk.SetActive(false);
-        
+        retry.SetActive(false);
+        lv = ltarget.GetComponent<RectTransform>().position;
+        rv = rtarget.GetComponent<RectTransform>().position;
     }
 
     public void mix()
     {
-        basketRectTransform = basket.GetComponent<RectTransform>();
+        coreB.interactable = true;
+        if(basket.TryGetComponent(out basketRectTransform)){
         StartCoroutine(RotateBasketCoroutine());
+        }
+    }
+
+    private System.Collections.IEnumerator RotateBasketCoroutine()
+    {
+        int repeatCount = 0;
+        var wait0 = new WaitForSeconds(0.25f);
+        yield return wait0;
+        while (repeatCount < 3)
+        {
+            yield return RotateToAngle(0, -15);
+            yield return RotateToAngle(-15, 15);
+            yield return RotateToAngle(15, 0);
+            repeatCount++;
+        }
+        ttb.SetActive(true);
+        selfB.interactable = true;
+    }
+
+    private System.Collections.IEnumerator RotateToAngle(float startAngle, float endAngle)
+    {
+        float timeElapsed = 0f;
+        while (timeElapsed < 0.15f)
+        {
+            float t = timeElapsed / 0.15f;
+            float angle = Mathf.Lerp(startAngle, endAngle, t);
+            basketRectTransform.rotation = Quaternion.Euler(0, 0, angle);
+            timeElapsed += Time.deltaTime;
+            yield return null;
+        }
+        basketRectTransform.rotation = Quaternion.Euler(0, 0, endAngle);
+    }
+
+    public void touch(){
+        StartCoroutine(touched());
+        PointerEventData pointerEventData = new PointerEventData(EventSystem.current);
+            ExecuteEvents.Execute(basket, pointerEventData, ExecuteEvents.pointerClickHandler);
+        ttb.SetActive(false);
+        selfB.interactable = false;
+    }
+
+    private System.Collections.IEnumerator touched()
+    {
+        var wait85 = new WaitForSeconds(0.85f);
+        basket.SetActive(false);
+        Oezjo.SetActive(true);
+        StartCoroutine(AnimateScaleBack());
+        yield return wait85;
+        StartCoroutine(MoveToAp(lv, 0.5f));
+        StartCoroutine(MoveToBp(rv, 0.5f));
+        talk.SetActive(true);
+        StartCoroutine(AnimateWidth());
+        yield return wait85;
+        StartCoroutine(AnimateHeight());
+        yield return wait85;
+        yield return wait85;
+        yield return wait85;
+        retry.SetActive(true);
     }
 
     private System.Collections.IEnumerator AnimateScaleBack()
     {
-        Vector3 targetScale = initCcale;
-        Vector3 startScale = cookieTransform.localScale;
-        float duration = 0.39f;
+        Vector2 targetScale = initCcale;
+        Vector2 startScale = cookieTransform.localScale;
         float elapsedTime = 0f;
 
-        while (elapsedTime < duration)
+        while (elapsedTime < 0.39f)
         {
-            cookieTransform.localScale = Vector3.Lerp(startScale, targetScale, elapsedTime / duration);
+            cookieTransform.localScale = Vector2.Lerp(startScale, targetScale, elapsedTime / 0.39f);
             elapsedTime += Time.deltaTime;
             yield return null;
         }
@@ -53,40 +150,7 @@ public class RotateBasket : MonoBehaviour
         cookieTransform.localScale = targetScale;
     }
 
-    private System.Collections.IEnumerator RotateBasketCoroutine()
-    {
-        int repeatCount = 0;
-        while (repeatCount < 3)
-        {
-            yield return RotateToAngle(0, -15, 0.15f);
-            yield return RotateToAngle(-15, 15, 0.15f);
-            yield return RotateToAngle(15, 0, 0.15f);
-            repeatCount++;
-        }
-        ttb.SetActive(true);
-        gameObject.GetComponent<Button>().interactable = true;
-    }
-
-    public void touch(){
-        StartCoroutine(touched());
-        ttb.SetActive(false);
-    }
-
-    private System.Collections.IEnumerator touched()
-    {
-        basket.SetActive(false);
-        Oezjo.SetActive(true);
-        StartCoroutine(AnimateScaleBack());
-        lv = ltarget.GetComponent<RectTransform>().position;
-        rv = rtarget.GetComponent<RectTransform>().position;
-        yield return new WaitForSeconds(0.85f);
-        StartCoroutine(MoveToAp(lv, 0.5f));
-        StartCoroutine(MoveToBp(rv, 0.5f));
-        talk.SetActive(true);
-        StartCoroutine(AnimateWidth());
-        yield return new WaitForSeconds(0.85f);
-        StartCoroutine(AnimateHeight());
-    }
+    
 
     private System.Collections.IEnumerator AnimateWidth()
     {
@@ -108,7 +172,7 @@ public class RotateBasket : MonoBehaviour
 
         while (elapsedTime < 1)
         {
-            float newHeight = Mathf.Lerp(30f, 120f, elapsedTime / 1);
+            newHeight = Mathf.Lerp(30f, 120f, elapsedTime / 1);
             talk.GetComponent<RectTransform>().sizeDelta = new Vector2(talk.GetComponent<RectTransform>().sizeDelta.x, newHeight);
             elapsedTime += Time.deltaTime;
             yield return null;
@@ -146,17 +210,12 @@ public class RotateBasket : MonoBehaviour
         rpiece.transform.position = targetPos1;
     }
 
-    private System.Collections.IEnumerator RotateToAngle(float startAngle, float endAngle, float duration)
-    {
-        float timeElapsed = 0f;
-        while (timeElapsed < duration)
-        {
-            float t = timeElapsed / duration;
-            float angle = Mathf.Lerp(startAngle, endAngle, t);
-            basketRectTransform.rotation = Quaternion.Euler(0, 0, angle);
-            timeElapsed += Time.deltaTime;
-            yield return null;
-        }
-        basketRectTransform.rotation = Quaternion.Euler(0, 0, endAngle);
+    public void reet(){
+        int currentSceneIndex = SceneManager.GetActiveScene().buildIndex;
+
+        // Reload the current scene
+        SceneManager.LoadScene(currentSceneIndex);
     }
+
+    
 }
