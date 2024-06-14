@@ -25,6 +25,9 @@ public class RotateBasket : MonoBehaviour
     private Button selfB;
     private Button coreB;
     private Button baseB;
+    private int _ = 0;
+    private int _1 = 0;
+    private TextMeshProUGUI text0;
     
     TMP_InputField inputField;
     Vector2 lv;
@@ -53,6 +56,8 @@ public class RotateBasket : MonoBehaviour
             ltarget = ot.GetChild(3).gameObject;
             rtarget = ot.GetChild(4).gameObject;
 
+        text0 = ttb.GetComponent<TextMeshProUGUI>();
+
         baseB = basket.GetComponent<Button>();
         ttb.SetActive(false);
         initCcale = new Vector2(15.26292f, 15.4337f);
@@ -79,7 +84,8 @@ public class RotateBasket : MonoBehaviour
     private System.Collections.IEnumerator RotateBasketCoroutine()
     {
         int repeatCount = 0;
-        var wait0 = new WaitForSeconds(0.25f);
+        var wait0 = new WaitForSeconds(0.325f);
+        var wait15 = new WaitForSeconds(0.15f);
         yield return wait0;
         while (repeatCount < 3)
         {
@@ -87,17 +93,21 @@ public class RotateBasket : MonoBehaviour
             yield return RotateToAngle(-15, 15);
             yield return RotateToAngle(15, 0);
             repeatCount++;
+            yield return wait15;
         }
-        ttb.SetActive(true);
+         if(_1 < 1){
+            yield return wait0;
+            ttb.SetActive(true);
+        }
         selfB.interactable = true;
     }
 
     private System.Collections.IEnumerator RotateToAngle(float startAngle, float endAngle)
     {
         float timeElapsed = 0f;
-        while (timeElapsed < 0.15f)
+        while (timeElapsed < 0.12f)
         {
-            float t = timeElapsed / 0.15f;
+            float t = timeElapsed / 0.12f;
             float angle = Mathf.Lerp(startAngle, endAngle, t);
             basketRectTransform.rotation = Quaternion.Euler(0, 0, angle);
             timeElapsed += Time.deltaTime;
@@ -130,11 +140,13 @@ public class RotateBasket : MonoBehaviour
         yield return wait85;
         yield return wait85;
         yield return wait85;
+        yield return wait85;
         retry.SetActive(true);
     }
 
     private System.Collections.IEnumerator AnimateScaleBack()
     {
+        _1++;
         Vector2 targetScale = initCcale;
         Vector2 startScale = cookieTransform.localScale;
         float elapsedTime = 0f;
@@ -168,8 +180,9 @@ public class RotateBasket : MonoBehaviour
 
     private System.Collections.IEnumerator AnimateHeight()
     {
+        _++;
+        if(_ == 1){
         float elapsedTime = 0f;
-
         while (elapsedTime < 1)
         {
             newHeight = Mathf.Lerp(30f, 120f, elapsedTime / 1);
@@ -180,6 +193,7 @@ public class RotateBasket : MonoBehaviour
 
         // Ensure the final height is set to the target height
         talk.GetComponent<RectTransform>().sizeDelta = new Vector2(talk.GetComponent<RectTransform>().sizeDelta.x, 120f);
+        }
     }
 
     private System.Collections.IEnumerator MoveToAp(Vector2 targetPos, float duration)
